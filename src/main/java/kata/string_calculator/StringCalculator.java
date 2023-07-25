@@ -3,22 +3,15 @@ package kata.string_calculator;
 import java.util.regex.Pattern;
 
 public class StringCalculator {
-    public static final String[] STANDARD_DELIMITERS = { ",", "\n" };
+    public static final String STANDARD_REGEX = ",|\n";
     public static final int MAX_ADDEND = 1000;
+
+    private static final Pattern DELIMITER_SPLIT_REGEX = Pattern.compile("\\]\\[");
 
     private int calledCount = 0;
 
     public int getCalledCount() {
         return calledCount;
-    }
-
-    public String[] split(String str, String... delimiters) {
-        String regex = "";
-        for (String delim : delimiters) {
-            regex += Pattern.quote(delim) + '|';
-        }
-        regex = regex.substring(0, regex.length() - 1);
-        return str.split(regex);
     }
 
     /**
@@ -39,26 +32,31 @@ public class StringCalculator {
     public int add(String numbers) {
         calledCount++;
 
-        String[] delimiters;
+        String regex = "";
         if (numbers.startsWith("//")) {
             int endOfFirstLine = numbers.indexOf('\n');
             if (endOfFirstLine < 0) {
-                throw new IllegalArgumentException("If specifying delimeters, there needs to be > 1 line");
+                throw new IllegalArgumentException("If specifying delimiters, there needs to be > 1 line");
             }
 
             String delimitersLine = numbers.substring(0, endOfFirstLine);
             delimitersLine = delimitersLine.substring("//[".length(), delimitersLine.length() - "]".length());
-            delimiters = delimitersLine.split("]\\[");
+
+            StringBuilder sb = new StringBuilder();
+            for (String delim : delimitersLine.split(DELIMITER_SPLIT_REGEX.pattern())) {
+                sb.append(Pattern.quote(delim) + '|');
+            }
+            regex = sb.substring(0, sb.length() - 1);
             numbers = numbers.substring(endOfFirstLine + 1);
         } else {
-            delimiters = STANDARD_DELIMITERS;
+            regex = STANDARD_REGEX;
         }
 
         if ("".equals(numbers)) {
             return 0;
         }
 
-        var stream = split(numbers, delimiters);
+        var stream = numbers.split(regex);
         StringBuilder errorMessage = new StringBuilder();
         int sum = 0;
         for (String str : stream) {
